@@ -164,39 +164,54 @@ class _ScrollDatePickerState extends State<ScrollDatePicker> {
   void _onChange(int colIndex, int rowIndex) {
     late DateTime newDate;
 
+    final activeDate = _activeDate.value;
+    final minDate = widget.dateOption.getMinDate;
+    final maxDate = widget.dateOption.getMaxDate;
+
     switch (colIndex) {
       case 0:
         var newDay = rowIndex + 1;
-        final maxDate = _helper.maxDate(
-          _activeDate.value.month,
-          _activeDate.value.year,
-        );
+        final maxDay = _helper.maxDate(activeDate.month, activeDate.year);
 
-        if (newDay > maxDate) newDay = maxDate;
+        if (newDay > maxDay) newDay = maxDay;
 
-        newDate = DateTime(
-          _activeDate.value.year,
-          _activeDate.value.month,
-          newDay,
-        );
+        newDate = DateTime(activeDate.year, activeDate.month, newDay);
+        if (newDate.isBefore(minDate)) newDate = minDate;
+        if (newDate.isAfter(maxDate)) newDate = maxDate;
         break;
       case 1:
-        var newDay = _activeDate.value.day;
-        final newMonth = rowIndex + 1;
-        final maxDate = _helper.maxDate(newMonth, _activeDate.value.year);
+        var newDay = activeDate.day;
+        var newMonth = rowIndex + 1;
+        final maxDay = _helper.maxDate(newMonth, activeDate.year);
 
-        if (newDay > maxDate) newDay = maxDate;
+        if (newDay > maxDay) newDay = maxDay;
 
-        newDate = DateTime(_activeDate.value.year, newMonth, newDay);
+        newDate = DateTime(activeDate.year, newMonth, newDay);
+        while (newDate.isBefore(minDate)) {
+          newMonth++;
+          newDate = DateTime(newDate.year, newMonth, newDate.day);
+        }
+        while (newDate.isAfter(maxDate)) {
+          newMonth--;
+          newDate = DateTime(newDate.year, newMonth, newDate.day);
+        }
         break;
       case 2:
-        var newDay = _activeDate.value.day;
-        final newYear = _helper.years[rowIndex];
-        final maxDate = _helper.maxDate(_activeDate.value.month, newYear);
+        var newDay = activeDate.day;
+        var newYear = _helper.years[rowIndex];
+        final maxDay = _helper.maxDate(activeDate.month, newYear);
 
-        if (newDay > maxDate) newDay = maxDate;
+        if (newDay > maxDay) newDay = maxDay;
 
-        newDate = DateTime(newYear, _activeDate.value.month, newDay);
+        newDate = DateTime(newYear, activeDate.month, newDay);
+        while (newDate.isBefore(minDate)) {
+          newYear++;
+          newDate = DateTime(newYear, newDate.month, newDate.day);
+        }
+        while (newDate.isAfter(maxDate)) {
+          newYear--;
+          newDate = DateTime(newYear, newDate.month, newDate.day);
+        }
         break;
       default:
         break;
@@ -205,7 +220,7 @@ class _ScrollDatePickerState extends State<ScrollDatePicker> {
     /* ReCheck day value */
     if (_controllers[0].hasClients) {
       final dayScrollPosition =
-          (_controllers[0].offset / widget.itemExtent).floor() % 31 + 1;
+          (_controllers[0].offset / widget.itemExtent).round() % 31 + 1;
 
       if (newDate.day != dayScrollPosition) {
         final difference = dayScrollPosition - newDate.day;
@@ -215,6 +230,49 @@ class _ScrollDatePickerState extends State<ScrollDatePicker> {
         if (!_controllers[0].position.isScrollingNotifier.value) {
           Future.delayed(Duration.zero, () {
             _controllers[0].animateTo(
+              endOffset,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.bounceOut,
+            );
+          });
+        }
+      }
+    }
+    if (_controllers[1].hasClients) {
+      final itemCount = _helper.itemCount(1);
+      final monthScrollPosition =
+          (_controllers[1].offset / widget.itemExtent).round() % itemCount + 1;
+
+      if (newDate.month != monthScrollPosition) {
+        final difference = monthScrollPosition - newDate.month;
+        final endOffset =
+            _controllers[1].offset - (difference * widget.itemExtent);
+
+        if (!_controllers[1].position.isScrollingNotifier.value) {
+          Future.delayed(Duration.zero, () {
+            _controllers[1].animateTo(
+              endOffset,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.bounceOut,
+            );
+          });
+        }
+      }
+    }
+    if (_controllers[2].hasClients) {
+      final itemCount = _helper.itemCount(2);
+      final yearScrollPosition =
+          (_controllers[2].offset / widget.itemExtent).round() % itemCount;
+
+      final index = _helper.years.indexOf(newDate.year);
+      if (index != yearScrollPosition) {
+        final difference = yearScrollPosition - index;
+        final endOffset =
+            _controllers[2].offset - (difference * widget.itemExtent);
+
+        if (!_controllers[2].position.isScrollingNotifier.value) {
+          Future.delayed(Duration.zero, () {
+            _controllers[2].animateTo(
               endOffset,
               duration: const Duration(milliseconds: 500),
               curve: Curves.bounceOut,
