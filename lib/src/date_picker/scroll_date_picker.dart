@@ -85,17 +85,9 @@ class _ScrollDatePickerState extends State<ScrollDatePicker> {
                 decoration: _style.centerDecoration,
               ),
               inactiveBuilder: (rowIndex) {
-                var disabled = false;
-                final maxDate = _helper.maxDate(
-                  _activeDate.value.month,
-                  _activeDate.value.year,
-                );
                 final itemCount = _helper.itemCount(colIndex);
-
-                if (colIndex == 0) {
-                  final date = rowIndex % itemCount + 1;
-                  if (date > maxDate) disabled = true;
-                }
+                final value = rowIndex % itemCount + 1;
+                final disabled = _getDisabled(colIndex, value);
 
                 return Text(
                   _helper.getText(colIndex, rowIndex % itemCount),
@@ -103,17 +95,9 @@ class _ScrollDatePickerState extends State<ScrollDatePicker> {
                 );
               },
               activeBuilder: (rowIndex) {
-                var disabled = false;
-                final maxDate = _helper.maxDate(
-                  _activeDate.value.month,
-                  _activeDate.value.year,
-                );
                 final itemCount = _helper.itemCount(colIndex);
-
-                if (colIndex == 0) {
-                  final date = rowIndex % itemCount + 1;
-                  if (date > maxDate) disabled = true;
-                }
+                final value = rowIndex % itemCount + 1;
+                final disabled = _getDisabled(colIndex, value);
 
                 return Text(
                   _helper.getText(colIndex, rowIndex % itemCount),
@@ -151,6 +135,30 @@ class _ScrollDatePickerState extends State<ScrollDatePicker> {
         curve: Curves.easeOut,
       );
     }
+  }
+
+  bool _getDisabled(int colIndex, int value) {
+    var disabled = false;
+
+    var date = _activeDate.value;
+    if (colIndex == 0) {
+      final maxDate = _helper.maxDate(date.month, date.year);
+      if (value > maxDate) return true;
+      date = DateTime(date.year, date.month, value);
+    } else if (colIndex == 1) {
+      date = DateTime(date.year, value, date.day);
+    } else if (colIndex == 2) {
+      final year = widget.dateOption.getMinDate.year + value - 1;
+      date = DateTime(year, date.month, date.day);
+    }
+
+    if (date.isBefore(widget.dateOption.getMinDate)) {
+      disabled = true;
+    } else if (date.isAfter(widget.dateOption.getMaxDate)) {
+      disabled = true;
+    }
+
+    return disabled;
   }
 
   void _onChange(int colIndex, int rowIndex) {
