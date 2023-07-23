@@ -125,7 +125,7 @@ class _PickerWidgetState extends State<PickerWidget> {
         if (widget.controller.hasClients) {
           final allowChange = !_isProgrammaticScroll.value;
           final rowIndex =
-              (endExtent / widget.itemExtent).floor() % widget.itemCount;
+              (endExtent / widget.itemExtent).round() % widget.itemCount;
 
           await widget.controller.animateTo(
             endExtent,
