@@ -41,7 +41,7 @@ class _Helper {
 
   List<int> get years => List.generate(
         _numOfYear,
-        (index) => dateOption.getMinDate.year - 1 + index,
+        (index) => dateOption.getMinDate.year + index,
       );
 
   int itemCount(int index) {
